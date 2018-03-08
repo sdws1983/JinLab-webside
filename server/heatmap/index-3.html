@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <head>
-<title>Welcome to JinLab</title>
+<title>Easy Heatmap</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" 
@@ -12,6 +12,8 @@
   <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <script src="jscolor.js"></script>
+  <script src="clusters.js"></script>
+  <script type="text/javascript" src="CalcEval.js"></script>
 <style>
 
   body {
@@ -21,13 +23,23 @@
   }
 
   .d3-tip {
-    font-family: Verdana;
-    background: rgba(0, 0, 0, 0.8);
-    padding: 8px;
-    color: #fff; 
-    z-index: 5070;
+  font-family: Tahoma;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 4px;
   }
 
+  .d3-tip:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 10px;
+    width: 100%;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.8);
+    position: absolute;
+    pointer-events: none;
+  }
   .axis path,
   .axis line {
     fill: none;
@@ -46,6 +58,7 @@
 <div class="container">
   <div class="row clearfix">
     <div class="col-md-12 column">
+
       <div class="page-header">
         <h1>
           Easy Heatmap
@@ -55,6 +68,18 @@
   </div>
   <div class="row clearfix">
     <div class="col-md-8 column">
+
+
+<div id='loading' style='display:none;width:100%;height:120%;text-align:center;padding-top:20%; position: absolute;alpha(opacity=45); opacity:0.6;background-color:#FFFFFF;z-index:1000;'>
+        <table style='margin:auto;'>
+            <tr><td>
+<i class="fa fa-spinner fa-pulse fa-lwi"></i>&nbsp;Waiting...
+<span class="sr-only">Loading...</span>
+            </td></tr>
+        </table>
+</div>
+
+
 					<div class="tabbable" id="tabs-25092">
 						<ul class="nav nav-tabs">
 							<li class="active">
@@ -63,14 +88,17 @@
 							<li>
 								 <a href="#more-parameters" data-toggle="tab">More parameters</a>
 							</li>
+							<li>
+								<a href="#tools" data-toggle="tab">Tools</a>
+							</li>
 						</ul>
 						<div class="tab-content">
 							<div class="tab-pane active" id="main-parameters">
                 <br />
                 <p>
-                   Cell width: <input id="cellwidth" style="width:50px;" value="15"/>
-                   Cell height: <input id="cellheight" style="width:50px;" value="15"/>
-                  <input name="color_1" type="hidden" id="color_1" value="ffffff">
+                   Cell width: <input id="cellwidth" style="width:50px;" value="20"/>
+                   Cell height: <input id="cellheight" style="width:50px;" value="20"/>
+                  <input name="color_1" type="hidden" id="color_1" value="FFFFFF">
                   <button class="jscolor {valueElement: 'color_1'}">Start color</button>
                   <input name="color_2" type="hidden" id="color_2" value="CD2626">
                   <button class="jscolor {valueElement: 'color_2'}">Stop color</button>
@@ -80,11 +108,34 @@
 							<div class="tab-pane" id="more-parameters">
                 <br />
 								<p>
-                Cell radian: <input id="cellradian" style="width:50px;" value="0"/>
-                Border width: <input id="borderwidth" style="width:50px;" value="1"/>
+                Cell radian: <input id="cellradian" style="width:50px;" value="0"/>&nbsp;&nbsp;
+                Border width: <input id="borderwidth" style="width:50px;" value="1"/>&nbsp;&nbsp;
 									<input name="color_bg" type="hidden" id="color_bg" value="000000">
-                  <button class="jscolor {valueElement: 'color_bg'}">Border color</button>
+                  <button class="jscolor {valueElement: 'color_bg'}">Border color</button>&nbsp;&nbsp;
+                                    <input type="checkbox" id="x_text" value="1" checked>x text&nbsp;&nbsp;
+                                    <input type="checkbox" id="y_text" value="1" checked>y text&nbsp;&nbsp;
+                                    <input type="checkbox" id="x_path" value="1" checked>x path&nbsp;&nbsp;
+                                    <input type="checkbox" id="y_path" value="1" checked>y path&nbsp;&nbsp;
+                                    <input type="checkbox" id="x_line" value="1" checked>x line&nbsp;&nbsp;
+                                    <input type="checkbox" id="y_line" value="1" checked>y line&nbsp;&nbsp;
 								</p>
+								<p>
+									<input type="checkbox" id="add_st3" value="1">Add a stop&nbsp;&nbsp;
+									<input name="st3_color" type="hidden" id="st3_color" value="99FF66">
+									<button class="jscolor {valueElement: 'st3_color'}">Color</button>
+									Stop position: <input id="st3_percentage" style="width:50px;" value="0.5"/>
+								</p>
+							</div>
+							<div class="tab-pane" id="tools">
+		<br />
+							<p>
+								<input type="checkbox" id="kmeans_row" value="1">Kmeans row cluster&nbsp;&nbsp;&nbsp;&nbsp;
+								Number of row clusters :&nbsp;<input id="kmeans_num_row" style="width:50px;" value="3"/>&nbsp;&nbsp;&nbsp;&nbsp;
+							</p>
+							<p>
+								<input type="checkbox" id="kmeans_col" value="1">Kmeans col cluster&nbsp;&nbsp;&nbsp;&nbsp;
+								Number of col clusters :&nbsp;<input id="kmeans_num_col" style="width:50px;" value="3"/>&nbsp;&nbsp;&nbsp;&nbsp;
+							</p>
 							</div>
 						</div>
 					</div>
@@ -126,20 +177,141 @@
   //document.getElementById('files').addEventListener('change', handleFileSelect, false);
   
   //function handleFileSelect(evt) {
+  function cl_col(data, n_cluster) {
+    var clusterMaker = cluster;
+    var data_t = [];
+    var d = [];
+    var new_d = [];
+    var cl_groups = [];
+    clusterMaker.k(n_cluster);
+    for (var i = 1; i < data[0].split(/,|\t/).length; i++ ) {
+        var tmp_d = [];
+        for (var j = 0; j < data.length; j++){
+        //console.log(data[j].split(/,|\t/)[i]);
+        tmp_d.push(data[j].split(/,|\t/)[i]);
+        }
+        
+        data_t.push(tmp_d.join(","));
+   }
+//   console.log(data_t);
+   
+     for (var i = 0; i < data_t.length; i++ ) {
+        row_all = data_t[i].split(/,|\t/);
+        row_all_cut = row_all.slice(1);
+        row = row_all_cut.map(function(data){return Number(data);});
+       d.push(row);
+    }
+    //console.log(d[0]);
+    clusterMaker.data(d);
+    result = clusterMaker.clusters();
+    console.log(result);
+    for (var i = 0; i < n_cluster; i++ ) {
+        var po = result[i].points;
+        cl_groups.push(po.length);
+        for (var j = 0; j < po.length; j++ ) {
+        var nameid = d.indexOf(po[j]);
+        new_d.push(data_t[nameid]);
+       }
+
+     }
+    var out_d = [];
+    for (var i = 0; i < data.length; i++ ) {
+    var tmp_d = [data[i].split(/,|\t/)[0]];
+        for (var j = 0; j < new_d.length; j++ ) {
+        tmp_d.push(new_d[j].split(/,|\t/)[i]);
+        
+        }
+    out_d.push(tmp_d.join(','));
+    }
+    //console.log(out_d);
+    var results = [out_d, cl_groups];
+    return results;
+}
+
+  function cl_row(data, n_cluster) {
+    var clusterMaker = cluster;
+    var d = [];
+    var new_d = [];
+    var cl_groups = [];
+    clusterMaker.k(n_cluster);
+    for (var i = 1; i < data.length; i++ ) {
+        row_all = data[i].split(/,|\t/);
+        row_all_cut = row_all.slice(1);
+        row = row_all_cut.map(function(data){return Number(data);});
+        d.push(row);
+    }
+    clusterMaker.data(d);
+    result = clusterMaker.clusters();
+    for (var i = 0; i < n_cluster; i++ ) {
+        var po = result[i].points;
+        cl_groups.push(po.length);
+        for (var j = 0; j < po.length; j++ ) {
+        var nameid = d.indexOf(po[j]);
+        var out = data[nameid + 1].split(/,|\t/)[0];
+        var tmp = po[j];
+        tmp.unshift(out);
+        tmp = tmp.join(',');
+        new_d.push(tmp);
+       }
+
+    }
+    var results = [new_d, cl_groups];
+    return results;
+}
+
+  function closeLoading() {
+    document.getElementById("loading").style.display="none";
+}
+
+
   function submit() {
+
     var x = [];
     var y = [];
     var value = [];
+    var cl_groups_row = [];
+    var cl_groups_col = [];
     var file = document.getElementById('files').files[0];
+    console.log(file);
+    if (!file){return file}
+    document.getElementById("loading").style.display="block";
+    var filename = document.getElementById('files').value.split(".");
+    var filetype = filename[filename.length - 1];
+    var patt = new RegExp("(xls|xlsx)$", "i");
     var reader = new FileReader();
     reader.onload = function (e) {
       var str = e.target.result;
-      var d = str.split("\n");
-      for (i = d.length - 1;  i > 0; i--) {
-          if (d[i] == '') {
-             d.splice(i, 1);
+      var dd = str.split("\n");
+      for (i = dd.length - 1;  i > 0; i--) {
+          if (dd[i] == '') {
+             dd.splice(i, 1);
           }
       };
+      if (document.getElementById("kmeans_row").checked) {
+      km_num_row = document.getElementById("kmeans_num_row").value;
+      km_num_row = Number(km_num_row);
+
+      results = cl_row(dd, km_num_row);
+      d = results[0];
+      cl_groups_row = results[1];
+      console.log(cl_groups_row);
+      console.log(d);
+      d.unshift(dd[0]);
+      dd = d;
+      }
+
+      if (document.getElementById("kmeans_col").checked) {
+      km_num_col = document.getElementById("kmeans_num_col").value;
+      km_num_col = Number(km_num_col);
+
+      results = cl_col(dd, km_num_col);
+      d = results[0];
+      cl_groups_col = results[1];
+      dd = d;
+      }
+
+      d = dd;
+
       var x_name = d[0].split(/,|\t/);
       for (var i = 1; i < d.length; i++ ) {
         row_all = d[i].split(/,|\t/);
@@ -150,9 +322,10 @@
         };
       };
       //alert(value);
-      plot(x, y, value);
+      plot(x, y, value, cl_groups_row, cl_groups_col);
     };  
     reader.readAsText(file);
+    setTimeout("closeLoading()",20);
   }
   
   function makedefault() {
@@ -180,7 +353,9 @@
     });
   };
 
-  function plot(x, y, value){
+  function plot(x, y, value, cl_groups_row, cl_groups_col){
+
+    var ce = new CalcEval();
 
     var svg = d3.select("svg")
         .remove();
@@ -200,6 +375,7 @@
 
     var max_value = Math.max.apply(null, value);
     var min_value = Math.min.apply(null, value);
+    value_range = [min_value, max_value];
     
     cellwidth = document.getElementById("cellwidth").value;
     cellwidth = Number(cellwidth);
@@ -209,6 +385,7 @@
 
     color_1 = "#" + document.getElementById("color_1").value;
     color_2 = "#" + document.getElementById("color_2").value;
+    color_range = [color_1, color_2];
 
     cellradian = document.getElementById("cellradian").value;
     cellradian = Number(cellradian);
@@ -217,6 +394,15 @@
     borderwidth = Number(borderwidth);
 
     color_bg = "#" + document.getElementById("color_bg").value;
+
+    if (document.getElementById("add_st3").checked) {
+        var st3_color = "#" + document.getElementById("st3_color").value;
+        var st3_percentage = document.getElementById("st3_percentage").value;
+        st3_percentage = Number(st3_percentage);
+        value_range = [min_value, ce.eval("(" + max_value + "-" + min_value + ")*" + st3_percentage + "+" + min_value), max_value];
+	//alert(ce.eval("(" + max_value + "-" + min_value + ")*" + st3_percentage + "+" + min_value));
+        color_range = [color_1, st3_color, color_2];
+        }
     
     if (isNaN(max_value)) {
     alert("Your dataset may contain some values not numbers");
@@ -232,7 +418,7 @@
       .text("Data status:");
 
     de.append("p")
-      .text("Col number: " + x_elements.length + "    " + "Row number: " + y_elements.length + "    " + "Value number: " + value.length +"Max: " + max_value + "Min: " + min_value);
+      .html("Col number: " + x_elements.length + "    " + "Row number: " + y_elements.length + "    " + "Value number: " + value.length +"<br />Max: " + max_value + "Min: " + min_value);
 //    alert(x_elements.length);
 //    alert(y_elements.length);
 
@@ -268,8 +454,8 @@
         .orient("left");
 
     var colorScale = d3.scale.linear()
-        .domain([min_value, max_value])
-        .range([color_1, color_2]);
+        .domain(value_range)
+        .range(color_range);
 
     var svg = d3.select('.heatmap')
         .append("svg")
@@ -289,13 +475,21 @@
         .attr("x2","0%")  
         .attr("y2","100%");  
   
+    linearGradient.selectAll("stop")
+                  .remove();
+
     var stop1 = linearGradient.append("stop")  
         .attr("offset","0%")  
         .style("stop-color",color_1);  
-  
+//    alert(st3_percentage); 
+    if (document.getElementById("add_st3").checked) { var stop3 = linearGradient.append("stop")
+        .attr("offset",st3_percentage)
+        .style("stop-color",st3_color);
+        }
+
     var stop2 = linearGradient.append("stop")  
         .attr("offset","100%")  
-        .style("stop-color",color_2);  
+        .style("stop-color",color_2);
 
     var bg = svg.append('rect')
         .attr('class', 'bgs')
@@ -310,9 +504,9 @@
 
     tip = d3.tip()
         .attr('class', 'd3-tip')
-        .style("visibility","visible")
+//        .style("visibility","visible")
         .style("font-size", "5px")
-        .offset([-20, 0])
+        .offset([-10, 0])
         .html(function(d) { 
           return "Value:  <span style='color:red'>" + d.value + "</span><br />x:  <span style='color:red'>" + d.x + "<br /></span>y:  <span style='color:red'>" + d.y; 
         });
@@ -325,8 +519,8 @@
         .attr('class', 'cell')
         .attr('width', cellinwidth)
         .attr('height', cellinheight)
-        .attr('y', function(d) { return yScale(d.y); })
-        .attr('x', function(d) { return xScale(d.x); })
+        .attr('y', function(d) { return yScale(d.y) ; })
+        .attr('x', function(d) { return xScale(d.x) ; })
         .attr("rx", cellradian)
         .attr("ry", cellradian)
         .attr('fill', function(d) { return colorScale(d.value); })
@@ -379,13 +573,58 @@
           "shape-rendering": "crispEdges"
         });
 
+    var x_axis = d3.select("svg")
+        .select("g")
+        .select("g.x.axis");
+
+    var y_axis = d3.select("svg")
+        .select("g")
+        .select("g.y.axis");
+
+    if (!document.getElementById("x_text").checked) {var rm_x_text = x_axis.selectAll("text").remove();}
+    
+    if (!document.getElementById("y_text").checked) {var rm_y_text = y_axis.selectAll("text").remove();}
+
+    if (!document.getElementById("x_line").checked) {var rm_x_line = x_axis.selectAll("line").remove();}
+
+    if (!document.getElementById("x_path").checked) {var rm_x_path = x_axis.selectAll("path").remove();}
+
+    if (!document.getElementById("y_line").checked) {var rm_y_line = y_axis.selectAll("line").remove();}
+
+    if (!document.getElementById("y_path").checked) {var rm_y_path = y_axis.selectAll("path").remove();}
+
+    if (document.getElementById("kmeans_row").checked) {
+    var cl_po_start = 0;
+    var cl_color_list = ["maroon","navy","olive","blue","fuchsia","gray","green","lime","purple","red","silver","teal","yellow","aqua","black"];
+    for (var i = 0; i < cl_groups_row.length; i++) {
+        d3.select("svg").append("rect").attr("x", width + margin.left + margin.right - 70).attr("y", 120 + cl_po_start)
+        .attr("width", 10).attr("height", cl_groups_row[i] * cellheight)//.attr("rx", 4).attr("ry", 4)
+        .style("fill", cl_color_list[i - parseInt(i/cl_color_list.length) * cl_color_list.length]);
+        cl_po_start = cl_po_start + cl_groups_row[i] * cellheight ;
+
+    }
+    }
+
+    if (document.getElementById("kmeans_col").checked) {
+    var cl_po_start = 0;
+    var cl_color_list = ["maroon","navy","olive","blue","fuchsia","gray","green","lime","purple","red","silver","teal","yellow","aqua","black"];
+    for (var i = 0; i < cl_groups_col.length; i++) {
+        d3.select("svg").append("rect").attr("x", cl_po_start + margin.left).attr("y", height  - 70 + margin.top)
+        .attr("height", 10).attr("width", cl_groups_col[i] * cellwidth)//.attr("rx", 4).attr("ry", 4)
+        .style("fill", cl_color_list[i - parseInt(i/cl_color_list.length) * cl_color_list.length]);
+        cl_po_start = cl_po_start + cl_groups_col[i] * cellwidth ;
+
+    }
+    }
+
+
     var colorRect = d3.select("svg")
         .append("rect")  
         .attr("x", width + margin.left + margin.right - 20)  
         .attr("y", 20)  
         .attr("width", 10)  
         .attr("height", 100)  
-        .style("fill","url(#" + linearGradient.attr("id") + ")");
+        .style("fill", "url(#" + linearGradient.attr("id") + ")");
     
     var range_texts_max = svg.append("g")
         .append("text")
@@ -427,7 +666,13 @@
         return x.toFixed(2);
       }
     
+  
+  };
 
+  function toPercent() {
+      Number.prototype.toPercent = function(){
+          return (Math.round(this * 10000)/100).toFixed(2) + '%';
+      }
   };
 
   function saveimg(){ 

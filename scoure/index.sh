@@ -1,0 +1,11 @@
+nohup samtools index -@ 24 Chr1.sorted.bam &
+nohup samtools index -@ 24 Chr2.sorted.bam &
+nohup samtools index -@ 24 Chr3.sorted.bam &
+nohup samtools index -@ 24 Chr4.sorted.bam &
+nohup samtools index -@ 24 Chr5.sorted.bam &
+nohup samtools index -@ 24 Chr6.sorted.bam &
+nohup samtools index -@ 24 Chr7.sorted.bam &
+nohup samtools index -@ 24 Chr8.sorted.bam &
+nohup samtools index -@ 24 Chr9.sorted.bam &
+nohup samtools index -@ 24 Chr10.sorted.bam &
+nohup samtools index -@ 24 scaffold.sorted.bam &

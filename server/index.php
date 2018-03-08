@@ -58,11 +58,18 @@ font-family:Georgia,Microsoft YaHei,'宋体' , Tahoma, Helvetica, Arial, "\5b8b\
 	</dd>
 <br />
         <dt>
-          <a href="/server/heatmap/index-3.html">Easy Heatmap</a>
+          <a href="/server/heatmap/index-4.html">Easy Heatmap</a>
         </dt>
         <dd>
         Use this Easy Heatmap to show your perfact data!
         </dd>
+<br />
+	<dt>
+	  <a href="/server/blast">Blast in cloud</a>
+	</dt>
+	<dd>
+	Do blast in cloud.
+	</dd>
       </dl>
     </div>
   </div>
