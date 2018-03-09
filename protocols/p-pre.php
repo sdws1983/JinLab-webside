@@ -18,6 +18,43 @@
 
   <body class="bg-light">
 
+   <!-- <nav class="navbar navbar-expand-md fixed-top navbar-dark bg-dark">
+      <a class="navbar-brand" href="#">Offcanvas navbar</a>
+      <button class="navbar-toggler p-0 border-0" type="button" data-toggle="offcanvas">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="navbar-collapse offcanvas-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Dashboard <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Notifications</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Switch account</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>
+            <div class="dropdown-menu" aria-labelledby="dropdown01">
+              <a class="dropdown-item" href="#">Action</a>
+              <a class="dropdown-item" href="#">Another action</a>
+              <a class="dropdown-item" href="#">Something else here</a>
+            </div>
+          </li>
+        </ul>
+        <form class="form-inline my-2 my-lg-0">
+          <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
+          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+      </div>
+    </nav>
+    --!>
+
 <!--    <div class="nav-scroller fixed-top bg-white box-shadow">--!>
       <nav class="nav nav-underline fixed-top bg-white">
         <a class="nav-link active" href="#">Protocols</a>
@@ -28,8 +65,8 @@
   --!>
         <a class="nav-link" href="upload.php">Upload</a>
         <a class="nav-link" href="#attentions">Attentions(MUST READ!)</a>
-        <a class="nav-link" href="../">Home</a>
 <!--        <a class="nav-link" href="#">Link</a>
+        <a class="nav-link" href="#">Link</a>
         <a class="nav-link" href="#">Link</a>
         <a class="nav-link" href="#">Link</a>
         <a class="nav-link" href="#">Link</a>--!>
@@ -47,8 +84,8 @@
       </div>
 --!>
 
-<!--      <div class="my-3 p-3 bg-white rounded box-shadow">--!>
-<!--        <h4 class="border-bottom border-gray pb-2 mb-0">Recent updates</h4>--!>
+      <div class="my-3 p-3 bg-white rounded box-shadow">
+        <h4 class="border-bottom border-gray pb-2 mb-0">Recent updates</h4>
 
 <?php
 function get_allfiles($path,&$files) {  
@@ -71,68 +108,16 @@ function get_filenamesbydir($dir){
     get_allfiles($dir,$files);  
     return $files;  
 }  
-
-function listdir($dir){ 
- if ($handle = opendir($dir)){ 
- $output = array(); 
- while (false !== ($item = readdir($handle))){ 
- if (is_dir($dir.'/'.$item) and $item != "." and $item != ".."){ 
- $output[] = $dir.'/'.$item; 
- $output = array_merge($output, ListDescendantDirectories($dir.'/'.$item)); 
- } 
- } 
- closedir($handle); 
- return $output; 
- }else{ 
- return false; 
- } 
-}
-function ListDescendantDirectories($dir) 
-{ 
- if ($handle = opendir($dir)) 
- { 
- $output = array(); 
- while (false !== ($item = readdir($handle))) 
- { 
- if (is_dir($dir.'/'.$item) and $item != "." and $item != "..") 
- { 
- $output[] = $dir.'/'.$item; 
- $output = array_merge($output, ListDescendantDirectories($dir.'/'.$item)); 
- } 
- } 
- closedir($handle); 
- return $output; 
- } 
- else 
- { 
- return false; 
- } 
-} 
-//调用，取目录中的所有子目录，循环遍历。
-$dirs = listdir('files');
-foreach($dirs as $dir){
-    echo '<div class="my-3 p-3 bg-white rounded box-shadow">';
-    echo '<h5 class="border-bottom border-gray pb-2 mb-0">' .substr($dir,6). '</h5>';
-    $filenames = get_filenamesbydir($dir);
-    foreach ($filenames as $value) {
-        echo '<div class="media text-muted pt-3"><p class="media-body pb-1 mb-0 small lh-100 border-bottom border-gray"><strong class="d-block text-gray-dark">';
-//    echo substr($value,6);
-        echo '<a class="nav-link" href="' .$value. '">' .explode("/",substr($value,6),3)[1]. '</a>';
-        echo '</strong></p></div>';
-    }
-    echo '</div>';
-
-}
- 
-//$filenames = get_filenamesbydir("files");
+     
+$filenames = get_filenamesbydir("files");
 //打印所有文件名，包括路径  
-//foreach ($filenames as $value) {  
-//    echo '<div class="media text-muted pt-3"><p class="media-body pb-1 mb-0 small lh-100 border-bottom border-gray"><strong class="d-block text-gray-dark">';
+foreach ($filenames as $value) {  
+    echo '<div class="media text-muted pt-3"><p class="media-body pb-1 mb-0 small lh-100 border-bottom border-gray"><strong class="d-block text-gray-dark">';
 //    echo substr($value,6);
-//    echo '<a class="nav-link" href="' .$value. '">' .substr($value,6). '</a>';
-//    echo '</strong></p></div>';
+    echo '<a class="nav-link" href="' .$value. '">' .substr($value,6). '</a>';
+    echo '</strong></p></div>';
 
-//}  
+}  
 ?>
 
 <!--
@@ -153,12 +138,12 @@ foreach($dirs as $dir){
         </div>
 --!>
         <small class="d-block text-right mt-3">
-          <a href="#">Top↑</a>
+          <a href="#">All updates</a>
         </small>
       </div>
 
       <div id="attentions" class="my-3 p-3 bg-white rounded box-shadow">
-        <h5 name="attentions" class="border-bottom border-gray pb-2 mb-0">Attentions</h5>
+        <h4 name="attentions" class="border-bottom border-gray pb-2 mb-0">Attentions</h4>
         <div class="media text-muted pt-3">
           <div class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
             <span class="d-block">1.所有资料Jinlab所有，若无允许，禁止随意传播。</span>
@@ -166,12 +151,12 @@ foreach($dirs as $dir){
         </div>
         <div class="media text-muted pt-3">
           <div class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-            <span class="d-block">2.如果你想上传自己的文件，请点击左上角的<a href="upload.php">upload</a>。</span>
+            <span class="d-block">2.如果你想上传自己的文件，请点击左上角的upload。</span>
           </div>
         </div>
         <div class="media text-muted pt-3">
           <div class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-            <span class="d-block">3.上传文件大小不应超过8M，文件上传后无法改名，无法删除，请注意。</span>
+            <span class="d-block">3.上传文件大小不应超过1Gb，文件上传后无法改名，无法删除，请注意。</span>
           </div>
         </div>
         <small class="d-block text-right mt-3">

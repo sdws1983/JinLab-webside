@@ -38,6 +38,25 @@
 
 <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="post" enctype="multipart/form-data">
 <!--<label for="file">Filename:</label>--!>
+
+<input type="radio" name="filetype" value="DNA, RNA and Protein extraction" checked>DNA, RNA and Protein extraction
+<br />
+<input type="radio" name="filetype" value="PCR">PCR
+<br />
+<input type="radio" name="filetype" value="Vector construction">Vector construction
+<br />
+<input type="radio" name="filetype" value="Y2H">Y2H
+<br />
+<input type="radio" name="filetype" value="Biochemistry assay">Biochemistry assay
+<br />
+<input type="radio" name="filetype" value="Cytologoy">Cytologoy
+<br />
+<input type="radio" name="filetype" value="Bioinformatics">Bioinformatics
+<br />
+<input type="radio" name="filetype" value="Others">Others
+<br />
+<br />
+
 <input class="btn btn-light" type="file" name="file" id="file"/>
 <br />
 <br />
@@ -74,9 +93,10 @@ if ($_FILES["file"]["error"] > 0)
     else
     {
       move_uploaded_file($_FILES["file"]["tmp_name"],
-      "files/" . $_FILES["file"]["name"]);
+      "files/" . $_POST['filetype'] . "/" . $_FILES["file"]["name"]);
       echo $_FILES["file"]["name"] . " upload successful! " . "<br /><br /><br />";
       echo '<a href="p.php" type="button" class="btn btn-success">Return</a>';
+      echo "<script>alert('upload successful!');</script>";
        }
    }
 }
@@ -93,9 +113,10 @@ echo "<br />File size exceeded limit. " . "<br />";
 
       <footer class="mastfoot mt-auto">
         <div class="inner">
-          <p>Cover template for <a href="https://getbootstrap.com/">Bootstrap</a>, by <a href="https://twitter.com/mdo">@mdo</a>.</p>
+          <!--<p>Cover template for <a href="https://getbootstrap.com/">Bootstrap</a></p>--!>
         </div>
       </footer>
+
     </div>
 
 

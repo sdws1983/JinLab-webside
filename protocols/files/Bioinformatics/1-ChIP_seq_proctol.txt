@@ -1,0 +1,109 @@
+
+ChIP-seq protolcol
+
+1 | Prepare the data:
+
+GSM658111: SRR094791.sra rice H3K36me3 ChIP-seq data
+GSM364939: SRR016810.sra  Arabidopsis  SEP3ChIP-seq data
+To download the data:!!!!!We do not practice in the server about this. The data has been already downloaded.
+
+lftp ftp-trace.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByExp/sra/SRX/SRX004/SRX004990/SRR016810
+get SRR016810.sra
+quit
+lftp ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX038%2FSRX038892/SRR094791/
+get SRR094791.sra
+quit
+
+  | Prepare the genome:
+
+lftp ftp://ftp.plantbiology.msu.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/
+cd /pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir
+get all.con
+quit
+
+2 | sra->fastq  ：transform
+
+	$ fastq-dump SRR094791.sra
+
+3 | Index the genome file: 
+
+	$ bowtie-build  Tigr7.con Tigr7 
+
+    QC  
+	
+	$ fastqc -o ./ -f fastq SRR094791.fastq
+
+4 | mapping:
+
+(bowtie -a -m 1 --best --strata -p 24 -S /home/ChIPseq/Tigr7 SRR094791.fastq SRR094791.sam)
+(bowtie -a -m 1 --best --strata -p 24 -S --chunkmbs 200 /home/ChIPseq/Tigr7 SRR094791.fastq  SRR094791.sam)
+nohup bowtie -a -m 1 --best --strata -v 2 -p 24 -S (--chunkmbs 200) /home/ChIPseq/Tigr7  -1  flyA_1.fq  -2 flyA_2.fq  G.sam >report1.log &
+        全部报告 单独比对  比对最优 最多错配 线程数 Sam格式输出    索引文件              输入序列                     输出文件
+  
+5 | peak calling or peak display:
+
+(macs14 -t SRR094791.sam -n h3k36me3.macs14 -g 3.5e+8 -f SAM)
+macs14 -t SRR094791.sam -n h3k36me3.macs14 -g 3.5e+8(rice) -f SAM --wig
+   --treatment=TFILE   the name string of the experiment   effective genome size   file format  output in wiggle format
+
+6 | visualization:
+
+samtools  view -bS SRR094791.sam > rice.h3k36me3.bam
+samtools sort rice.h3k36me3.bam rice.h3k36me3.sort
+samtools  index rice.h3k36me3.sort.bam
+
+remove adapter:
+
+fastx_clipper -a adapter  -C -d 200 -v -i 1.fastq -o 2.fastq -Q 33
+
+remove NNNNNNNN:
+
+nohup fastx_clipper -d 200 -v -i R1.fastq -o R2.fastq -Q 33 &
+
+[-a ADAPTER] = ADAPTER string. default is CCTTAAGG (dummy adapter)
+[-n]= keep sequences with unknown (N) nucleotides.default is to discard such sequences.
+[-v] = Verbose - report number of sequences.
+If [-o] is specified,  report will be printed to STDOUT.If [-o] is not specified (and output goes to STDOUT), report will be printed to STDERR.
+[-c]  = Discard non-clipped sequences (i.e. - keep only sequences which contained the adapter).[-C] = Discard clipped sequences (i.e. - keep only sequences which did not contained the adapter).
+[-i INFILE]  = FASTA/Q input file. default is STDIN. [-o OUTFILE] = FASTA/Q output file. default is STDOUT.
+
+Mapping with bowtie
+
+map a sequence to genome :  
+
+bowtie -a -v 0 genome –c seq
+
+
+[-n <init> -l -<init> ]     ===≤ N mismatches allowed in first L bases on left end
+[-e]                  === Sum of mismatch qualities may not exceed E
+                     ====N, L and E configured with –n 2, -l 28, -e 70
+-v  <int>             ===== allows alignments with up to <int>mismatches
+                    ====Regardless of quality values,Max mismatches allowed: 3  
+
+-a instructs bowtie to report all valid alignments, subject to the alignment policy: -v 2(always 0-3).
+
+ -k 3 instructs bowtie to report up to 3 valid alignments,default (-k 1),if --best was not specified, we are not guaranteed that bowtie will report the best alignment.
+
+-n In the -n alignment mode, an alignment's "stratum" is defined as the number of mismatches in the "seed" region, i.e. the leftmost L bases, where L is set with the -l option.
+
+-v mode, alignments may have no more than V mismatches, where V may be a number from 0 through 3 set using the -v option. Quality values are ignored.
+
+The -v option is mutually exclusive with the -n option.
+
+--best When the --best option is specified, Bowtie guarantees the reported alignment(s) are "best" in terms of the number of mismatches, and that the alignments are reported in best-to-worst order. Bowtie is somewhat slower when --best is specified.
+
+--strata Specifying --strata in addition to -a and --best causes bowtie to report only those alignments in the best alignment "stratum".In the -v alignment mode, an alignment's stratum is defined as the total number of mismatches in the entire alignment.
+The --strata and --best options do not apply in paired-end mode.
+
+ e_coli All examples are using the e_coli index packaged with Bowtie.
+
+--suppress The --suppress option is used to keep the output concise and some output is elided for clarity.
+
+-v 2, In this case, bowtie finds 5 inexact hits in the E. coli genome
+-c The query sequences are given on commandline. I.e. <m1>, <m2> and <singles> are comma-separated lists of reads rather than lists of read files.
+--chunkmbs <int> The number of megabytes of memory a given thread is given to store path descriptors in --best mode.
+-S/--sam  Print alignments in SAM format. See the SAM output section of the manual for details.
+
+
+
+

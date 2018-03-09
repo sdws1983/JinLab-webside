@@ -1,0 +1,140 @@
+RNA-seq protocol
+
+PROCEDURE
+Align the RNA-seq reads to the genome  TIMING ~6 h
+1| Map the reads for each sample to the reference genome:
+$ tophat -p 8 -G genes.gtf -o C1_R1_thout genome C1_R1_1.fq C1_R1_2.fq
+$ tophat -p 8 -G genes.gtf -o C1_R2_thout genome C1_R2_1.fq C1_R2_2.fq
+$ tophat -p 8 -G genes.gtf -o C1_R3_thout genome C1_R3_1.fq C1_R3_2.fq
+$ tophat -p 8 -G genes.gtf -o C2_R1_thout genome C2_R1_1.fq C2_R1_2.fq
+$ tophat -p 8 -G genes.gtf -o C2_R2_thout genome C2_R2_1.fq C2_R2_2.fq
+$ tophat -p 8 -G genes.gtf -o C2_R3_thout genome C2_R3_1.fq C2_R3_2.fq
+
+Assemble expressed genes and transcripts TIMING ~6 h
+2| Assemble transcripts for each sample:
+$ cufflinks -p 8 -o C1_R1_clout C1_R1_thout/accepted_hits.bam
+$ cufflinks -p 8 -o C1_R2_clout C1_R2_thout/accepted_hits.bam
+$ cufflinks -p 8 -o C1_R3_clout C1_R3_thout/accepted_hits.bam
+$ cufflinks -p 8 -o C2_R1_clout C2_R1_thout/accepted_hits.bam
+$ cufflinks -p 8 -o C2_R2_clout C2_R2_thout/accepted_hits.bam
+$ cufflinks -p 8 -o C2_R3_clout C2_R3_thout/accepted_hits.bam
+
+3| Create a file called assemblies.txt that lists the assembly file for each sample. The file should contain the following lines:
+./C1_R1_clout/transcripts.gtf
+./C2_R2_clout/transcripts.gtf
+./C1_R2_clout/transcripts.gtf
+./C2_R1_clout/transcripts.gtf
+./C1_R3_clout/transcripts.gtf
+./C2_R3_clout/transcripts.gtf
+
+4| Run Cuffmerge on all your assemblies to create a single merged transcriptome annotation:
+
+cuffmerge -g genes.gtf -s genome.fa -p 8 assemblies.txt
+
+Identify differentially expressed genes and transcripts  TIMING ~6 h
+
+5| Run Cuffdiff by using the merged transcriptome assembly along with the BAM files from TopHat for each replicate, -G  only displayed annotationed genes in referenced genome.
+$ cuffdiff -o diff_out -b genome.fa -p 8 ¨CL C1,C2 -u merged_asm/merged.gtf\ ./C1_R1_thout/accepted_hits.bam,./C1_R2_thout/accepted_hits.bam,./C1_R3_thout/accepted_hits.bam ./C2_R1_thout/accepted_hits.bam,./C2_R3_thout/accepted_hits.bam,./C2_R2_thout/accepted_hits.bam
+
+Explore differential analysis results with CummeRbund  TIMING variable
+
+6| Open a new plotting script file in the editor of your choice, or use the R interactive shell:
+
+$ R
+
+7| Load the CummeRbund package into the R environment:
+
+ >  library(cummeRbund)
+
+8| Create a CummeRbund database from the Cuffdiff output:
+
+ >  cuff_data <- readCufflinks('diff_out')
+
+9| Plot the distribution of expression levels for each sample (Fig. 6):
+
+ >  csDensity(genes(cuff_data))
+
+10| Compare the expression of each gene in two conditions with a scatter plot (Fig. 7):
+
+ >  csScatter(genes(cuff_data), 'C1', 'C2')
+
+11| Create a volcano plot to inspect differentially expressed genes (Fig. 8):
+
+ >  csVolcano(genes(cuff_data), 'C1', 'C2')
+
+
+12| Plot expression levels for genes of interest with bar plots (Fig. 9a):
+
+ >  mygene <- getGene(cuff_data,'regucalcin')
+ >  expressionBarplot(mygene)
+
+13| Plot individual isoform expression levels of selected 
+
+genes of interest with bar plots (Fig. 9b):
+ >  expressionBarplot(isoforms(mygene))
+
+14| Inspect the map files to count the number of reads that map to each chromosome (optional). From your working directory, enter the following at the command line:
+
+$ for i in *thout/accepted_hits.bam; do echo $i; samtools index $i ; done;
+$ for i in *thout/accepted_hits.bam; do echo $i; samtools idxstats $i ; done;
+
+Compare transcriptome assembly to the reference 
+transcriptome (optional) TIMING <5 min
+
+15| You can use a utility program included in the Cufflinks suite called Cuffcompare to compare assemblies against a reference transcriptome. Cuffcompare makes it possible to separate new genes from known ones, and new isoforms of known genes from known splice variants. Run Cuffcompare on each of the replicate assemblies as well as the merged transcriptome file:
+
+$ find . -name transcripts.gtf > gtf_out_list.txt
+$ cuffcompare -i gtf_out_list.txt -r genes.gtf
+$ for i in 'find . -name *.tmap'; do echo $i; awk 'NR > 1 { s[$3] ++ } END { for (j in s) { print j, s[j] }} ' $i; done;
+
+Record differentially expressed genes and transcripts to files for use in downstream analysis (optional) TIMING <5 min
+
+16| You can use CummeRbund to quickly inspect the number of genes and transcripts that are differentially expressed between two samples. The R code below loads the results of Cuffdiff¡¯s analysis and reports the number of differentially expressed genes:
+
+ >  library(cummeRbund)
+ >  cuff_data <- readCufflinks('diff_out')
+ >  
+ >  cuff_data
+
+CuffSet instance with:
+   2 samples
+   14353 genes
+   26464 isoforms
+   17442 TSS
+   13727 CDS
+   14353 promoters
+   17442 splicing
+   11372 relCDS
+ >  gene_diff_data <- diffData(genes(cuff_data))
+ >  sig_gene_data <- subset(gene_diff_data, (significant == 'yes'))
+ >  nrow(sig_gene_data)
+[1] 312
+
+17| Similar snippets can be used to extract differentially expressed transcripts or differentially spliced and regulated genes:
+
+ >  isoform_diff_data <- diffData(isoforms(cuff_data), 'C1', 'C2')
+ >  sig_isoform_data <- subset(isoform_diff_data, (significant == 'yes'))
+ >  nrow(sig_isoform_data)
+ >  tss_diff_data <- diffData(TSS(cuff_data), 'C1', 'C2')
+ >  sig_tss_data <- subset(tss_diff_data, (significant == 'yes'))
+ >  nrow(sig_tss_data)
+ >  cds_diff_data <- diffData(CDS(cuff_data), 'C1', 'C2')
+ >  sig_cds_data <- subset(cds_diff_data, (significant == 'yes'))
+ >  nrow(sig_cds_data)
+ >  promoter_diff_data <- distValues(promoters(cuff_data))
+ >  sig_promoter_data <- subset(promoter_diff_data, (significant == 'yes'))
+ >  nrow(sig_promoter_data)
+
+>  splicing_diff_data <- distValues(splicing(cuff_data))
+ >  sig_splicing_data <- subset(splicing_diff_data, (significant = = 'yes'))
+ >  nrow(sig_splicing_data)
+ >  relCDS_diff_data <- distValues(relCDS(cuff_data))
+ >  sig_relCDS_data <- subset(relCDS_diff_data, (significant == 'yes'))
+ >  nrow(sig_relCDS_data)
+
+
+18| The code above can also be modified to write out small files containing only the differentially expressed genes. These files may be more manageable for some spreadsheet software than the full output files produced by Cuffdiff. The R snippet below writes a table of differentially expressed genes into a file named diff_genes.txt.
+
+ >  gene_diff_data  <- diffData(genes(cuff_data))
+ >  sig_gene_data  <- subset(gene_diff_data, (significant = = 'yes'))
+ >  write.table(sig_gene_data, 'diff_genes.txt', sep = '\t', row.names = F, col.names = T, quote= F)
