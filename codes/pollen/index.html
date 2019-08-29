@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../../../favicon.ico">
+
+    <title>Pollen_genetic_mapping_pipeline</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../bootstrap-4.0.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="pricing.css" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+      <h5 class="my-0 mr-md-auto font-weight-normal">Codes</h5>
+      <nav class="my-2 my-md-0 mr-md-3">
+        <a class="p-2 text-dark" href="#Dependencies">Dependencies</a>
+        <a class="p-2 text-dark" href="#Useage">Useage</a>
+        <a class="p-2 text-dark" href="#implementation">Implementation</a>
+        <a class="p-2 text-dark" href="#Downloads">Downloads</a>
+        <a class="p-2 text-dark" href="#Example">Example</a>
+        <a class="p-2 text-dark" href="#Gallery">Gallery</a>
+	
+      </nav>
+      
+    </div>
+
+    <div class="pricing-header px-3 py-3 pt-md-6 pb-md-4 mx-auto text-center">
+      <h1 class="display-4">Rapid Pollen genetic mapping pipeline</h1>
+      <br />
+      <p class="lead">A rapid high-resolution pollen genetic map construction pipeline.<br /><small>Version:0.0.1.5  Powered by Yumin Huang</small></p>
+      <br />
+      <hr>
+    </div>
+
+    <div class="pricing-header px-3 py-3 pt-md-6 pb-md-4 mx-auto">
+      <h3 id="Dependencies" class="display-5">Dependencies</h3>
+      <hr>
+      <p>Required packages:</p>
+      <code><pre>
+      bedtools
+      samtools
+      Python3+ (pysam)
+      </pre></code>
+
+      <br>
+      <h3 id="Useage" class="display-5">How to use</h3>
+      <hr>
+      <code><pre>
+
+usage: pollen_genetic_mapping_pipeline_version_0.0.1.5.py [-h] [-i INPUT]
+                                                          [-s SNPS]
+                                                          [-o OUTPUT] [-f FAI]
+                                                          [-q MAPQ]
+                                                          [-w WINDOW]
+                                                          [-e STEP]
+                                                          [--type {PE,SE}]
+                                                          [--allele-frq]
+                                                          [--allele-frq-depth ALLELE_FRQ_DEPTH]
+                                                          [--bin-depth BIN_DEPTH]
+                                                          [--run-split]
+                                                          [--step1] [--step2]
+                                                          [--step3] [--step4]
+                                                          [--step5] [--step6]
+                                                          [--step8]
+
+##########################################################################################
+
+                             pollen genetic mapping pipeline
+
+------------------------------------------------------------------------------------------
+
+                                   Version : 0.0.1.5
+                                    Author : Yumin Huang
+
+      Update:
+         1. change the bed file produced by vcf file, used in intersectBed.
+
+##########################################################################################
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+Main:
+  main arguments
+
+  -i INPUT, --input INPUT
+                        bam input file, must be indexed
+  -s SNPS, --snps SNPS  SNPs info betweent parents
+  -o OUTPUT, --output OUTPUT
+                        output name
+  -f FAI, --fai FAI     genome index file
+  -q MAPQ, --mapq MAPQ  minimum MAPQ value (optional)
+  -w WINDOW, --window WINDOW
+                        window size for each bin (default=2000000)
+  -e STEP, --step STEP  window step for bins (default=100000)
+
+Advanced:
+  optional arguments
+
+  --type {PE,SE}        sequencing type: PE or SE ? (default=PE)
+  --allele-frq          calculate allele frequency, if you just want calculate
+                        frequency only, please run it with "--run-split", and
+                        change the input file to "XXXX.reads.list"
+                        (default=False)
+  --allele-frq-depth ALLELE_FRQ_DEPTH
+                        run with "--allele-frq", the minimum reads depth in
+                        each snps which used for calculating allele frequency
+                        (default=20)
+  --bin-depth BIN_DEPTH
+                        the minimum reads depth in each windows (default=2000)
+
+Sub-modules:
+  run separately arguments
+
+  --run-split           run pipeline separately (default=False)
+  --step1               run step-1: Collecting mapped reads intersect with
+                        snps (by bedtools)
+  --step2               run step-2: Scan the snps and list the properly mapped
+                        reads in every snps
+  --step3               run step-3: Sort reads list file and filter out the
+                        reads which only contain 1 snp
+  --step4               run step-4: Identify the snps status in each reads
+  --step5               run step-5: Divide reads into non-recombination area
+                        and recombination area
+  --step6               run step-6: Sort the files and calculate the number of
+                        reads in different areas
+  --step8               run step-8: make windows, calculate the recombination
+                        reads number and non-recombination reads number in
+                        each bin
+
+      </pre></code>
+
+      <br>
+      <h3 id="implementation" class="display-5">Implementation</h3>
+      <hr>
+      <code><pre>
+      Step0: mapping and de novo snps calling (optional)
+          MB350.bam : 32 Gb; Mo17_hybrid_final_pseudomolecule.numcer.B73_V4.snp.SNPs.bed : from Lai lab, 9,867,466 high quality snps.
+      Step1: Collecting mapped reads intersect with snps. (about 3 ~ hours)
+          MB350.filter.bam : 5.4 Gb; MB350.snps.filter.Q_10.bam : 4.6 Gb & 60,338,400 reads
+      Step2: Scan the snps and list the properly mapped reads in every snps. (about 11.5 ~ hours)
+      Step3: Sort reads list file and filter out the reads which only contain 1 snp. (about 1 ~ hour)
+          MB350.Q_10.sorted.reads.list : 15,847,263 reads
+          Calculate allele frequency (optional) ------ new!
+      Step4: Identify the snps status in each reads. (few minutes)
+      Step5: divide reads into non-recombination area and recombination area. (few minutes)
+          MB350.Q_10.recombination events : 1,318,978; MB350.Q_10.no.recombination events : 15,836,414
+      Step6: sort the files and calculate the number of reads in different areas. (few minutes)
+      Step7: for each recombination event, calculate rate. (optional)
+      Step8: make windows, calculate the events number in each bin. (optional) ------ new!
+
+      </pre></code>
+
+      <br>
+      <h3 id="Downloads" class="display-5">Downloads</h3>
+      <hr>
+      <h6>Source:</h6>
+      <p><a href="https://github.com/jyanglab/pollen-seq">pollen_pipeline_version_0.0.1.5.py</a></p>
+
+      <h6>Sample data (used for input):</h6>
+      <p><a href="Mo17_hybrid_final_pseudomolecule.numcer.B73_V4.snp.SNPs.vcf">B73_Mo17.snps.vcf</a>
+      <br />
+      <a href="Zea_mays.AGPv4.dna.toplevel.fa.fai">Zea_mays.AGPv4.dna.toplevel.fa.fai</a></p>
+
+      <br>
+      <h3 id="Example" class="display-5">Example</h3>
+      <hr>
+      <h6>Command:</h6>
+      <code><pre>
+       python3 pollen_pipeline_version_0.0.1.0.py \
+               -i 5_fold_cov.zea_mays.bam \
+               -s Mo17_hybrid_final_pseudomolecule.numcer.B73_V4.snp.SNPs.vcf \
+               -o 5_fold \
+               -f Zea_mays.AGPv4.dna.toplevel.fa.fai \
+               -q 60
+      </pre></code>
+      <br />
+      
+      <h6>Output:</h6>
+      <code><pre>
+	total 9.8G
+	-rw-r--r-- 1 root root  70K Jul 29 00:33 allele_A.bin
+	-rw-r--r-- 1 root root  69K Jul 29 00:33 allele_B.bin
+	-rw-r--r-- 1 root root 149M Jul 29 00:33 BM250-4.intervals.allele_frq
+	-rw-r--r-- 1 root root  68K Jul 29 00:33 BM250-4.intervals.allele_frq.bin
+	-rw-r--r-- 1 root root 1.1G Jul 28 15:26 BM250-4.intervals.filter.bam
+	-rw-r--r-- 1 root root 2.1M Jul 28 15:27 BM250-4.intervals.filter.bam.bai
+	-rw-r--r-- 1 root root 207M Jul 29 01:09 BM250-4.intervals.no.recombination
+	-rw-r--r-- 1 root root 677K Jul 29 01:13 BM250-4.intervals.no.recombination.bin
+	-rw-r--r-- 1 root root  53M Jul 29 01:13 BM250-4.intervals.no.recombination.number
+	-rw-r--r-- 1 root root 3.9G Jul 28 15:01 BM250-4.intervals.Q_60.bam
+	-rw-r--r-- 1 root root 2.0G Jul 29 00:30 BM250-4.intervals.reads.list
+	-rw-r--r-- 1 root root 524K Jul 29 01:09 BM250-4.intervals.recombination
+	-rw-r--r-- 1 root root 625K Jul 29 01:14 BM250-4.intervals.recombination.bin
+	-rw-r--r-- 1 root root 123K Jul 29 01:13 BM250-4.intervals.recombination.number
+	-rw-r--r-- 1 root root 255M Jul 28 15:04 BM250-4.intervals.ref.snps.bed
+	-rw-r--r-- 1 root root 1.8G Jul 29 01:04 BM250-4.intervals.sorted.reads.list
+	-rw-r--r-- 1 root root 640M Jul 29 01:08 BM250-4.intervals.sorted.reads.list.status
+	-rw-r--r-- 1 root root 537K Jul 29 01:14 BM250-4_q60.intervals.bin.rate
+	-rw-r--r-- 1 root root  30K Jul 29 01:14 calling.log
+	-rw-r--r-- 1 root root 578K Jul 29 01:13 genome.windows
+      </pre></code>
+
+      <p><em>BM250-4_q60.intervals.bin.rate</em>: <strong>allele frequency in bin.</strong><br/>
+      <em>BM250-4.intervals.recombination.bin</em>: <strong>recombination events number in bin.</strong></p>
+
+      <br>
+      <h3 id="Gallery" class="display-5">Gallery</h3>
+      <br /> 
+      <img alt="1200x1600" src="BM_filter.jpeg" />
+<!--      <br />
+      <img alt="600x800" src="v0.0.1.0_RC_rate.jpeg" />--!>
+
+    </div>
+
+    <div class="container">
+      <footer class="pt-4 my-md-5 pt-md-5 border-top">
+        <div class="row">
+          <div class="col-12 col-md">
+<!--            <small class="d-block mb-3 text-muted">&copy; 2018</small>--!>
+            <small class="d-block mb-3 text-muted">Yumin Huang &copy; 2018</small>
+            <small class="d-block mb-3 text-muted">All Rights Reserved</small>
+          </div>
+          <div class="col-6 col-md">
+            <h5>Features</h5>
+            <ul class="list-unstyled text-small">
+              <li><a class="text-muted" href="#">Cool stuff</a></li>
+              <li><a class="text-muted" href="#">Random feature</a></li>
+              <li><a class="text-muted" href="#">Team feature</a></li>
+              <li><a class="text-muted" href="#">Stuff for developers</a></li>
+              <li><a class="text-muted" href="#">Another one</a></li>
+              <li><a class="text-muted" href="#">Last time</a></li>
+            </ul>
+          </div>
+          <div class="col-6 col-md">
+            <h5>Resources</h5>
+            <ul class="list-unstyled text-small">
+              <li><a class="text-muted" href="#">Resource</a></li>
+              <li><a class="text-muted" href="#">Resource name</a></li>
+              <li><a class="text-muted" href="#">Another resource</a></li>
+              <li><a class="text-muted" href="#">Final resource</a></li>
+            </ul>
+          </div>
+          <div class="col-6 col-md">
+            <h5>About</h5>
+            <ul class="list-unstyled text-small">
+              <li><a class="text-muted" href="#">Team</a></li>
+              <li><a class="text-muted" href="#">Locations</a></li>
+              <li><a class="text-muted" href="#">Privacy</a></li>
+              <li><a class="text-muted" href="#">Terms</a></li>
+            </ul>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script>window.jQuery || document.write('<script src="../../bootstrap-4.0.0/assets/js/vendor/jquery-slim.min.js"><\/script>')</script>
+    <script src="../../bootstrap-4.0.0/assets/js/vendor/popper.min.js"></script>
+    <script src="../../bootstrap-4.0.0/dist/js/bootstrap.min.js"></script>
+    <script src="../../bootstrap-4.0.0/assets/js/vendor/holder.min.js"></script>
+    <script>
+      Holder.addTheme('thumb', {
+        bg: '#55595c',
+        fg: '#eceeef',
+        text: 'Thumbnail'
+      });
+    </script>
+  </body>
+</html>

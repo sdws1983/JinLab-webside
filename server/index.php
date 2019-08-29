@@ -70,6 +70,14 @@ font-family:Georgia,Microsoft YaHei,'宋体' , Tahoma, Helvetica, Arial, "\5b8b\
 	<dd>
 	Do blast in cloud.
 	</dd>
+<br />
+	<dt>
+	  <a href="/server/Jbrowser">Jbrowser</a>
+	</dt>
+	<dd>
+	JBrowse is a fast, scalable genome browser built completely with JavaScript and HTML5
+	</dd>
+<br />
       </dl>
     </div>
   </div>

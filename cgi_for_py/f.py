@@ -35,7 +35,16 @@ if blasttype == "mo17":
 if blasttype == "mo17_genomic":
    command = "blastn -query " + str(name) + " -db /copy1/a-reference/1-maize/x-other-genomes/0-Mo17/Mo17_pseudo.fa -evalue " + evalue + ' -num_threads 16 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qseq sseq" -num_alignments ' + num + " -out " + str(name) + ".out"
 if blasttype == "w22_genomic":
-   command = "blastn -query " + str(name) + " -db /copy1/a-reference/1-maize/x-other-genomes/0-W22/GCA_001644905.2_Zm-W22-REFERENCE-NRGENE-2.0_genomic.fna -evalue " + evalue + ' -num_threads 16 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qseq sseq" -num_alignments ' + num + " -out " + str(name) + ".out"
+   command = "blastn -query " + str(name) + " -db /copy1/a-reference/1-maize/x-other-genomes/0-W22/Zm-W22-REFERENCE-NRGENE-2.0.fasta -evalue " + evalue + ' -num_threads 16 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qseq sseq" -num_alignments ' + num + " -out " + str(name) + ".out"
+if blasttype == "w22":
+   command = "blastn -query " + str(name) + " -db /copy1/a-reference/1-maize/x-other-genomes/0-W22/Zm-W22-CDS-NRGENE-2.0.fasta -evalue " + evalue + ' -num_threads 16 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qseq sseq" -num_alignments ' + num + " -out " + str(name) + ".out"
+if blasttype == "HZ4_genomic":
+   command = "blastn -query " + str(name) + " -db /copy1/a-reference/1-maize/x-other-genomes/6-Huangzao4/GWHAAJX00000000 -evalue " + evalue + ' -num_threads 16 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qseq sseq" -num_alignments ' + num + " -out " + str(name) + ".out"
+
+if blasttype == "coix_contig":
+   command = "blastn -query " + str(name) + " -db /copy1/a-reference/coix/BJCoxi_reference.V1.fasta -evalue " + evalue + ' -num_threads 16 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qseq sseq" -num_alignments ' + num + " -out " + str(name) + ".out"
+if blasttype == "Sorghum":
+   command = "blastn -query " + str(name) + " -db /copy1/a-reference/9-other-speices/5-Sorghum_bicolor/sorghum.fa -evalue " + evalue + ' -num_threads 16 -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qseq sseq" -num_alignments ' + num + " -out " + str(name) + ".out"
 
 #command = "wc -l *"
 os.system(command)

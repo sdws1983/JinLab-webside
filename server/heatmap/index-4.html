@@ -473,7 +473,7 @@
 
     var cellinwidth = cellwidth - borderwidth,
         cellinheight = cellheight - borderwidth
-        margin = {top: 120, right: 80, bottom: 20, left: 120};
+        margin = {top: 180, right: 120, bottom: 20, left: 400};
    
     var width = x_elements.length * cellwidth// - margin.right - margin.left,
         height = y_elements.length * cellheight + 80//300 - margin.top - margin.bottom;
@@ -648,7 +648,7 @@
     var cl_po_start = 0;
     var cl_color_list = ["maroon","navy","olive","blue","fuchsia","gray","green","lime","purple","red","silver","teal","yellow","aqua","black"];
     for (var i = 0; i < cl_groups_row.length; i++) {
-        d3.select("svg").append("rect").attr("x", width + margin.left + margin.right - 70).attr("y", 120 + cl_po_start)
+        d3.select("svg").append("rect").attr("x", width + margin.left + margin.right - 70).attr("y", 180 + cl_po_start)
         .attr("width", 10).attr("height", cl_groups_row[i] * cellheight)//.attr("rx", 4).attr("ry", 4)
         .style("fill", cl_color_list[i - parseInt(i/cl_color_list.length) * cl_color_list.length]);
         cl_po_start = cl_po_start + cl_groups_row[i] * cellheight ;
@@ -671,15 +671,15 @@
 
     var colorRect = d3.select("svg")
         .append("rect")  
-        .attr("x", width + margin.left + margin.right - 20)  
-        .attr("y", 20)  
+        .attr("x", width + margin.left + margin.right - 20)
+        .attr("y", 80)  
         .attr("width", 10)  
         .attr("height", 100)  
         .style("fill", "url(#" + linearGradient.attr("id") + ")");
     
     var range_texts_max = svg.append("g")
         .append("text")
-        .attr("x", width + margin.right - 30)
+        .attr("x", width + margin.right - 40)
         .attr("y", -2)
         .attr('font-weight', 'normal')
         .style("text-anchor", "end")
@@ -689,7 +689,7 @@
 
     var range_texts_min = svg.append("g")
         .append("text")
-        .attr("x", width + margin.right - 30)
+        .attr("x", width  + margin.right - 40)
         .attr("y", -102)
         .attr('font-weight', 'normal')
         .style("text-anchor", "end")
@@ -718,6 +718,20 @@
       }
     
   
+  };
+
+  function minMax2DArray(arr, idx) {
+    var max = -Number.MAX_VALUE,
+        min = Number.MAX_VALUE;
+    arr.forEach(function(e) {
+        if (max < e[idx]) {
+            max = e[idx];
+        }
+        if (min > e[idx]) {
+           min = e[idx];
+       }
+    });
+    return {max: max, min: min};
   };
 
   function toPercent() {
